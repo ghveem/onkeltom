@@ -1,13 +1,30 @@
-<!doctype html>
-<html lang="nb">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NDLA bildeopplaster</title>
-    <script src="./config.js"></script>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <title>NDLA bildeopplasting</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="page-shell">
+    <h1>NDLA bildeopplasting</h1>
+
+    <label>Serienavn
+      <input type="text" id="seriesName" />
+    </label>
+
+    <input type="file" id="files" multiple />
+
+    <button onclick="startUpload()">Last opp</button>
+
+    <div class="progress-block">
+      <div id="progressText">0 / 0</div>
+      <progress id="progressBar" class="upload-progress" value="0" max="100"></progress>
+    </div>
+
+    <div id="errors"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
 </html>
