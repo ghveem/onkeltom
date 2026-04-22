@@ -321,6 +321,24 @@ function buildMetadata(item) {
   return metadata;
 }
 
+function fileStatusKind(item) {
+  return item.status || "pending";
+}
+
+function updateFileSummary() {
+  const total = fileItems.length;
+  const uploaded = fileItems.filter((item) => item.status === "success").length;
+  const failed = fileItems.filter((item) => item.status === "error").length;
+  const uploading = fileItems.filter((item) => item.status === "uploading").length;
+
+  if (!total) {
+    els.fileSummary.textContent = "Ingen filer valgt.";
+    return;
+  }
+
+  els.fileSummary.innerHTML = `<span class="summary-strong">${total} filer</span> · ${uploaded} opplastet · ${failed} feil · ${uploading} under opplasting`;
+}
+
 function fileStatusLabel(item) {
   if (item.status === "success") return "Opplastet";
   if (item.status === "error") return `Feil${item.lastError ? `: ${item.lastError}` : ""}`;
@@ -331,15 +349,15 @@ function fileStatusLabel(item) {
 function renderFiles() {
   els.fileGrid.innerHTML = "";
   if (!fileItems.length) {
-    els.fileSummary.textContent = "Ingen filer valgt.";
+    updateFileSummary();
     els.retryFailedButton.classList.add("hidden");
     return;
   }
 
-  els.fileSummary.textContent = `${fileItems.length} filer valgt. Dra for å sortere eller bruk pilknappene.`;
+  updateFileSummary();
   fileItems.forEach((item, index) => {
     const card = document.createElement("article");
-    card.className = "file-card";
+    card.className = `file-card ${fileStatusKind(item)}`;
     card.draggable = true;
     card.dataset.id = item.id;
     card.addEventListener("dragstart", () => {
@@ -359,8 +377,9 @@ function renderFiles() {
         <div class="file-top-row">
           <div>
             <div class="file-title">${escapeHtml(item.title)}</div>
-            <div class="file-meta">${escapeHtml(item.file.name)} · ${(item.file.size / 1024 / 1024).toFixed(2)} MB · ${escapeHtml(fileStatusLabel(item))}</div>
+            <div class="file-meta">${escapeHtml(item.file.name)} · ${(item.file.size / 1024 / 1024).toFixed(2)} MB</div>
           </div>
+          <div class="status-badge ${escapeHtml(fileStatusKind(item))}">${escapeHtml(fileStatusLabel(item))}</div>
           <div class="card-actions">
             <button type="button" class="mini-button" data-move="-1">↑</button>
             <button type="button" class="mini-button" data-move="1">↓</button>
@@ -414,6 +433,7 @@ function updateProgress() {
   const percent = progress.total ? Math.round((progress.completed / progress.total) * 100) : 0;
   els.progressBar.value = percent;
   els.progressText.textContent = `${progress.completed} / ${progress.total}`;
+  updateFileSummary();
   if (!progress.total) {
     els.progressMeta.textContent = "Ikke startet";
     return;
@@ -664,6 +684,7 @@ async function init() {
   syncLicenseDescription();
   renderKeywordChips();
   renderFiles();
+  updateFileSummary();
   renderPreview();
   updateProgress();
   await initAuth();

@@ -3,13 +3,17 @@
   --card: #ffffff;
   --text: #1f2937;
   --muted: #6b7280;
-  --line: #ddd2ca;
+  --line: #d7cec7;
   --brand: #0f766e;
   --brand-2: #115e59;
+  --brand-soft: #eef8f6;
+  --bg-soft: #fcfaf7;
   --danger: #b91c1c;
   --danger-bg: #fff1f2;
   --success: #166534;
   --success-bg: #effcf3;
+  --warning: #9a6700;
+  --warning-bg: #fff7d6;
   --neutral: #374151;
   --neutral-bg: #f5f2ed;
   --shadow: 0 8px 30px rgba(15, 23, 42, 0.07);
@@ -187,19 +191,54 @@ textarea {
 }
 
 .dropzone {
-  border: 2px dashed #c7b8ab;
-  border-radius: 22px;
-  padding: 24px;
-  display: grid;
-  gap: 10px;
-  justify-items: center;
-  background: #fcfaf7;
+  border: 2px dashed var(--line);
+  border-radius: 20px;
+  padding: 12px;
+  background: var(--bg-soft);
   transition: 0.2s ease;
+}
+
+.dropzone:hover,
+.dropzone:focus-within {
+  border-color: var(--brand);
+  background: var(--brand-soft);
 }
 
 .dropzone.dragover {
   border-color: var(--brand);
-  background: #eef8f6;
+  background: var(--brand-soft);
+  box-shadow: inset 0 0 0 1px rgba(15, 118, 110, 0.12);
+}
+
+.dropzone-inner {
+  min-height: 220px;
+  border-radius: 16px;
+  display: grid;
+  gap: 10px;
+  place-items: center;
+  text-align: center;
+  padding: 24px;
+}
+
+.dropzone-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 1.4rem;
+  background: rgba(15, 118, 110, 0.12);
+  color: var(--brand);
+  font-weight: 800;
+}
+
+.dropzone-secondary {
+  color: var(--muted);
+}
+
+.dropzone-footnote {
+  max-width: 40ch;
+  text-align: center;
 }
 
 .file-picker {
@@ -270,6 +309,11 @@ textarea {
   color: var(--muted);
 }
 
+.summary-strong {
+  color: var(--text);
+  font-weight: 700;
+}
+
 .keyword-chip-row {
   display: flex;
   flex-wrap: wrap;
@@ -308,6 +352,30 @@ textarea {
   border-radius: 20px;
   padding: 16px;
   background: #fffdfa;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+}
+
+.file-card:hover {
+  transform: translateY(-1px);
+}
+
+.file-card.pending {
+  border-color: var(--line);
+}
+
+.file-card.uploading {
+  border-color: #9bd7d1;
+  background: #f3fbfa;
+}
+
+.file-card.success {
+  border-color: #b8e6c6;
+  background: var(--success-bg);
+}
+
+.file-card.error {
+  border-color: #f3c4ca;
+  background: var(--danger-bg);
 }
 
 .file-card.dragging {
@@ -343,6 +411,41 @@ textarea {
 .file-meta {
   color: var(--muted);
   font-size: 0.92rem;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  border: 1px solid transparent;
+}
+
+.status-badge.pending {
+  background: var(--neutral-bg);
+  color: var(--neutral);
+}
+
+.status-badge.uploading {
+  background: var(--brand-soft);
+  color: var(--brand);
+  border-color: #b7e5e1;
+}
+
+.status-badge.success {
+  background: var(--success-bg);
+  color: var(--success);
+  border-color: #b8e6c6;
+}
+
+.status-badge.error {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border-color: #f3c4ca;
 }
 
 .card-actions {

@@ -140,13 +140,17 @@
             <p>Dra inn bilder eller velg filer. Du kan sortere og overstyre metadata per bilde.</p>
           </div>
 
-          <div id="dropzone" class="dropzone" tabindex="0">
-            <strong>Dra bilder hit</strong>
-            <span>eller</span>
-            <label class="file-picker">
-              <input id="fileInput" type="file" accept="image/*" multiple />
-              <span>Velg bilder</span>
-            </label>
+          <div id="dropzone" class="dropzone" tabindex="0" aria-label="Last opp bilder">
+            <div class="dropzone-inner">
+              <div class="dropzone-icon" aria-hidden="true">⬆</div>
+              <strong>Dra bilder hit</strong>
+              <span class="dropzone-secondary">eller velg bilder fra maskinen</span>
+              <label class="file-picker">
+                <input id="fileInput" type="file" accept="image/*" multiple />
+                <span>Velg bilder</span>
+              </label>
+              <small class="dropzone-footnote">PNG, JPG og andre bildefiler støttes. Du kan dra inn mange filer samtidig.</small>
+            </div>
           </div>
 
           <div class="toolbar">
