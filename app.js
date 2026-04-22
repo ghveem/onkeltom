@@ -34,7 +34,15 @@ const els = {
   results: document.getElementById("results")
 };
 
-const cfg = window.NDLA_CONFIG || {};
+const cfg = (() => {
+  const base = window.NDLA_CONFIG || {};
+  const runtime = window.NDLA_RUNTIME_CONFIG || {};
+  const merged = { ...base, ...runtime };
+  if (base.environments || runtime.environments) {
+    merged.environments = { ...(base.environments || {}), ...(runtime.environments || {}) };
+  }
+  return merged;
+})();
 let auth0Client = null;
 let accessToken = null;
 let currentEnvironmentKey = null;

@@ -1,0 +1,1 @@
+window.NDLA_RUNTIME_CONFIG = window.NDLA_RUNTIME_CONFIG || {};

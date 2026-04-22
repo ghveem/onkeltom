@@ -88,3 +88,22 @@ Appen bygger metadata per fil slik:
 - Bruk **Forhåndsvis payload** før første opplasting
 - La serienavn være kort og stabilt, siden det legges på alle bilder som keyword
 - Hvis noen filer feiler, bruk **Prøv feilede på nytt**
+
+
+## GitHub Secrets og runtime-config
+
+GitHub Pages kan ikke holde ekte hemmeligheter skjult i frontend-koden. I denne appen er `auth0ClientId`, `audience` og `domain` normalt offentlige OAuth-verdier, så de kan ligge i `config.js`.
+
+Hvis du likevel vil styre dem via GitHub, følger det med en workflow i `.github/workflows/deploy.yml` som skriver `runtime-config.js` under deploy.
+
+Legg inn disse i repoet:
+
+### Secrets
+- `NDLA_AUTH0_TEST_CLIENT_ID`
+- `NDLA_AUTH0_STAGING_CLIENT_ID`
+
+### Variables
+- `NDLA_AUTH0_TEST_AUDIENCE` (valgfri, standard `https://api.test.ndla.no`)
+- `NDLA_AUTH0_STAGING_AUDIENCE` (valgfri, standard `https://api.staging.ndla.no`)
+
+Appen leser først `config.js`, og overstyrer deretter med `runtime-config.js` hvis den finnes.
