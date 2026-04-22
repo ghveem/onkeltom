@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="nb">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NDLA bildebatch-opplaster</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+    <script src="./config.js"></script>
+    <script defer src="./app.js"></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero card">
+        <div>
+          <p class="eyebrow">NDLA image-api</p>
+          <h1>Bildeopplasting i serie</h1>
+          <p class="lede">
+            Fyll inn felles metadata én gang, velg mange bildefiler, og la tittelen bli hentet automatisk fra filnavnet på hver fil.
+          </p>
+        </div>
+        <div class="auth-box">
+          <div id="authStatus" class="status-pill neutral">Ikke logget inn</div>
+          <button id="loginButton" class="button button-primary">Logg inn med Google</button>
+          <button id="logoutButton" class="button button-secondary hidden">Logg ut</button>
+        </div>
+      </header>
+
+      <main class="main-grid">
+        <section class="card">
+          <div class="section-header">
+            <h2>1. Felles metadata</h2>
+            <p>Disse feltene brukes for alle opplastede bilder. Tittel blir overstyrt per fil.</p>
+          </div>
+
+          <form id="metadataForm" class="form-grid">
+            <label>
+              <span>Språk *</span>
+              <select name="language" required>
+                <option value="nb" selected>nb</option>
+                <option value="nn">nn</option>
+                <option value="en">en</option>
+                <option value="und">und</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Bildetekst / caption *</span>
+              <textarea name="caption" rows="3" required placeholder="Felles bildetekst for serien"></textarea>
+            </label>
+
+            <label>
+              <span>Alt-tekst</span>
+              <textarea name="alttext" rows="3" placeholder="Valgfri alt-tekst. La stå tom hvis den må være ulik per bilde."></textarea>
+            </label>
+
+            <label>
+              <span>Tagger *</span>
+              <input name="tags" type="text" required placeholder="komma, skilte, tagger" />
+            </label>
+
+            <label>
+              <span>Model release</span>
+              <select name="modelReleased">
+                <option value="not-set" selected>not-set</option>
+                <option value="yes">yes</option>
+                <option value="no">no</option>
+                <option value="not-applicable">not-applicable</option>
+              </select>
+            </label>
+
+            <div class="subsection">
+              <h3>Copyright / lisens</h3>
+              <div class="sub-grid">
+                <label>
+                  <span>Lisens *</span>
+                  <input name="license" type="text" required placeholder="f.eks. CC-BY-4.0 eller COPYRIGHTED" />
+                </label>
+                <label>
+                  <span>Lisensbeskrivelse</span>
+                  <input name="licenseDescription" type="text" placeholder="Valgfri beskrivelse" />
+                </label>
+                <label>
+                  <span>Lisens-URL</span>
+                  <input name="licenseUrl" type="url" placeholder="https://..." />
+                </label>
+                <label>
+                  <span>Origin</span>
+                  <input name="origin" type="text" placeholder="Kilde / opphav" />
+                </label>
+                <label class="checkbox-row">
+                  <input name="processed" type="checkbox" />
+                  <span>Prosessert</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="subsection">
+              <h3>Bidragsytere</h3>
+              <div class="sub-grid">
+                <label>
+                  <span>Creators</span>
+                  <textarea name="creators" rows="3" placeholder="Én per linje: type|navn&#10;photographer|Ola Nordmann"></textarea>
+                </label>
+                <label>
+                  <span>Processors</span>
+                  <textarea name="processors" rows="3" placeholder="Én per linje: type|navn"></textarea>
+                </label>
+                <label>
+                  <span>Rightsholders</span>
+                  <textarea name="rightsholders" rows="3" placeholder="Én per linje: type|navn"></textarea>
+                </label>
+              </div>
+            </div>
+          </form>
+        </section>
+
+        <section class="card">
+          <div class="section-header">
+            <h2>2. Filer</h2>
+            <p>Velg mange bilder. Du får en forhåndsvisning av tittelen som blir sendt til API-et.</p>
+          </div>
+
+          <label class="file-picker">
+            <input id="fileInput" type="file" accept="image/*" multiple />
+            <span>Velg bilder</span>
+          </label>
+
+          <div id="fileSummary" class="muted">Ingen filer valgt.</div>
+          <div id="fileList" class="file-list"></div>
+        </section>
+      </main>
+
+      <section class="card upload-card">
+        <div class="section-header">
+          <h2>3. Last opp</h2>
+          <p>Appen sender én fil om gangen til NDLA sitt image-api. Metadata sendes som <code>metadata</code> + <code>file</code> i <code>multipart/form-data</code>.</p>
+        </div>
+
+        <div class="actions">
+          <button id="uploadButton" class="button button-primary" disabled>Last opp alle</button>
+          <button id="dryRunButton" class="button button-secondary">Forhåndsvis payload</button>
+        </div>
+
+        <pre id="previewBox" class="preview-box">Ingen forhåndsvisning enda.</pre>
+        <div id="results" class="results"></div>
+      </section>
+    </div>
+  </body>
+</html>
