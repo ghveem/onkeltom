@@ -1,30 +1,194 @@
-<!DOCTYPE html>
-<html lang="no">
-<head>
-  <meta charset="UTF-8" />
-  <title>NDLA bildeopplasting</title>
-  <link rel="stylesheet" href="styles.css" />
-</head>
-<body>
-  <div class="page-shell">
-    <h1>NDLA bildeopplasting</h1>
+<!doctype html>
+<html lang="nb">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NDLA bildebatch-opplaster</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+    <script src="./config.js"></script>
+    <script defer src="./app.js"></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero card">
+        <div>
+          <p class="eyebrow">NDLA image-api</p>
+          <h1>Bildebatch-opplaster</h1>
+          <p class="lede">
+            Statisk GitHub Pages-app for opplasting av mange bilder til NDLA sitt image-api. Tittel blir hentet fra filnavnet, og serienavn legges til som nøkkelord på hvert bilde.
+          </p>
+          <div class="github-pages-note">
+            Denne versjonen er laget for ren GitHub Pages-deploy. Ingen backend er nødvendig, men du må fylle inn Auth0-konfig i <code>config.js</code>.
+          </div>
+        </div>
+        <div class="auth-box">
+          <label class="environment-picker">
+            <span>Miljø</span>
+            <select id="environmentSelect"></select>
+          </label>
+          <div id="authStatus" class="status-pill neutral">Ikke logget inn</div>
+          <button id="loginButton" class="button button-primary">Logg inn med Google</button>
+          <button id="logoutButton" class="button button-secondary hidden">Logg ut</button>
+        </div>
+      </header>
 
-    <label>Serienavn
-      <input type="text" id="seriesName" />
-    </label>
+      <main class="main-grid">
+        <section class="card">
+          <div class="section-header">
+            <h2>1. Felles metadata</h2>
+            <p>Fyll inn det som skal være likt for alle bildene. Tittel per bilde kommer fra filnavnet.</p>
+          </div>
 
-    <input type="file" id="files" multiple />
+          <form id="metadataForm" class="form-grid">
+            <label>
+              <span>Språk *</span>
+              <select name="language" required>
+                <option value="nb" selected>nb</option>
+                <option value="nn">nn</option>
+                <option value="en">en</option>
+                <option value="und">und</option>
+              </select>
+            </label>
 
-    <button onclick="startUpload()">Last opp</button>
+            <label>
+              <span>Serienavn</span>
+              <input name="seriesName" type="text" placeholder="Legges til som nøkkelord på alle bildene" />
+              <small class="series-help">Det finnes ikke eget serie-endepunkt. Serienavn lagres som keyword/tag.</small>
+            </label>
 
-    <div class="progress-block">
-      <div id="progressText">0 / 0</div>
-      <progress id="progressBar" class="upload-progress" value="0" max="100"></progress>
+            <label>
+              <span>Bildetekst / caption *</span>
+              <textarea name="caption" rows="3" required placeholder="Felles bildetekst for serien"></textarea>
+            </label>
+
+            <label>
+              <span>Alt-tekst</span>
+              <textarea name="alttext" rows="3" placeholder="Valgfri felles alt-tekst. Kan overstyres per bilde nedenfor."></textarea>
+            </label>
+
+            <label>
+              <span>Nøkkelord / tags *</span>
+              <input name="tags" type="text" required placeholder="komma, skilte, nøkkelord" />
+            </label>
+
+            <label>
+              <span>Model release</span>
+              <select name="modelReleased">
+                <option value="not-set" selected>not-set</option>
+                <option value="yes">yes</option>
+                <option value="no">no</option>
+                <option value="not-applicable">not-applicable</option>
+              </select>
+            </label>
+
+            <div class="subsection">
+              <h3>Copyright / lisens</h3>
+              <div class="sub-grid">
+                <label>
+                  <span>Lisens *</span>
+                  <select name="license" required>
+                    <option value="CC-BY-4.0" selected>CC-BY-4.0</option>
+                    <option value="CC-BY-SA-4.0">CC-BY-SA-4.0</option>
+                    <option value="CC-BY-NC-4.0">CC-BY-NC-4.0</option>
+                    <option value="CC-BY-NC-SA-4.0">CC-BY-NC-SA-4.0</option>
+                    <option value="CC-BY-NC-ND-4.0">CC-BY-NC-ND-4.0</option>
+                    <option value="COPYRIGHTED">COPYRIGHTED</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Lisensbeskrivelse</span>
+                  <input name="licenseDescription" type="text" placeholder="Fylles ut automatisk, men kan overstyres" />
+                </label>
+                <label>
+                  <span>Origin</span>
+                  <input name="origin" type="text" placeholder="Kilde / opphav" />
+                </label>
+                <label class="checkbox-row">
+                  <input name="processed" type="checkbox" />
+                  <span>Bearbeidet</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="subsection">
+              <h3>Bidragsytere</h3>
+              <div class="sub-grid">
+                <label>
+                  <span>Creators</span>
+                  <textarea name="creators" rows="3" placeholder="Én per linje: type|navn&#10;photographer|Ola Nordmann"></textarea>
+                </label>
+                <label>
+                  <span>Processors</span>
+                  <textarea name="processors" rows="3" placeholder="Én per linje: type|navn"></textarea>
+                </label>
+                <label>
+                  <span>Rightsholders</span>
+                  <textarea name="rightsholders" rows="3" placeholder="Én per linje: type|navn"></textarea>
+                </label>
+              </div>
+            </div>
+          </form>
+        </section>
+
+        <section class="card">
+          <div class="section-header">
+            <h2>2. Filer</h2>
+            <p>Dra inn bilder eller velg filer. Du kan sortere og overstyre metadata per bilde.</p>
+          </div>
+
+          <div id="dropzone" class="dropzone" tabindex="0">
+            <strong>Dra bilder hit</strong>
+            <span>eller</span>
+            <label class="file-picker">
+              <input id="fileInput" type="file" accept="image/*" multiple />
+              <span>Velg bilder</span>
+            </label>
+          </div>
+
+          <div class="toolbar">
+            <div id="fileSummary" class="muted">Ingen filer valgt.</div>
+            <div class="toolbar-actions">
+              <button id="applyBatchButton" class="button button-secondary">Bruk felles verdier på alle</button>
+              <button id="clearFilesButton" class="button button-secondary">Tøm liste</button>
+            </div>
+          </div>
+
+          <div id="keywordChips" class="keyword-chip-row"></div>
+          <div id="fileGrid" class="file-grid"></div>
+        </section>
+      </main>
+
+      <section class="card upload-card">
+        <div class="section-header">
+          <h2>3. Last opp</h2>
+          <p>Opplastingen skjer som <code>multipart/form-data</code> til valgt miljø. Appen bruker kontrollert parallell opplasting med retry for feilede filer.</p>
+        </div>
+
+        <div class="actions">
+          <button id="uploadButton" class="button button-primary" disabled>Last opp alle</button>
+          <button id="retryFailedButton" class="button button-secondary hidden">Prøv feilede på nytt</button>
+          <button id="dryRunButton" class="button button-secondary">Forhåndsvis payload</button>
+          <label class="checkbox-inline">
+            <input id="stopOnError" type="checkbox" />
+            <span>Stopp ved første feil</span>
+          </label>
+        </div>
+
+        <div class="progress-block">
+          <div class="progress-label-row">
+            <div class="progress-text" id="progressText">0 / 0</div>
+            <div class="progress-meta" id="progressMeta">Ikke startet</div>
+          </div>
+          <progress id="progressBar" class="upload-progress" value="0" max="100"></progress>
+        </div>
+
+        <pre id="previewBox" class="preview-box">Ingen forhåndsvisning enda.</pre>
+        <div id="results" class="results"></div>
+      </section>
     </div>
-
-    <div id="errors"></div>
-  </div>
-
-  <script src="app.js"></script>
-</body>
+  </body>
 </html>
