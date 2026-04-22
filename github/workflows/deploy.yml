@@ -1,0 +1,52 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate runtime config
+        run: |
+          cat > runtime-config.js <<'EOF'
+          window.NDLA_RUNTIME_CONFIG = {
+            defaultEnvironment: "test",
+            environments: {
+              test: {
+                auth0ClientId: "${{ secrets.NDLA_AUTH0_TEST_CLIENT_ID }}",
+                auth0Audience: "${{ vars.NDLA_AUTH0_TEST_AUDIENCE || 'https://api.test.ndla.no' }}"
+              },
+              staging: {
+                auth0ClientId: "${{ secrets.NDLA_AUTH0_STAGING_CLIENT_ID }}",
+                auth0Audience: "${{ vars.NDLA_AUTH0_STAGING_AUDIENCE || 'https://api.staging.ndla.no' }}"
+              }
+            }
+          };
+          EOF
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
