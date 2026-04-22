@@ -1,134 +1,80 @@
-# NDLA bildebatch-opplaster
+# NDLA bulk image uploader (React + Vite)
 
-Liten statisk webapp for GitHub Pages som lar deg:
+Liten React-app for GitHub Pages som laster opp mange bilder til NDLA sitt image-api.
 
-- logge inn via Auth0/Google
-- velge mange bilder samtidig
-- fylle inn felles metadata én gang
-- generere `title` fra filnavnet på hvert bilde
-- velge lisens fra nedtrekksmeny med NDLA-tilpassede lisenskoder
-- få automatisk forslag til lisensbeskrivelse (standard: `CC-BY-4.0`)
-- laste opp ett og ett bilde til NDLA sitt image-api
+## Innhold
 
-## Hva appen bygger på
+- Kun miljøene **test** og **staging**
+- Google-innlogging via Auth0 SPA SDK
+- Felles metadata + per-bilde overstyringer
+- Tittel hentes fra filnavn som standard
+- Auto-tagging fra filnavn
+- Drag & drop + manuell sortering
+- Thumbnails og metadata-preview
+- Batch-redigering for valgte bilder
+- Køstyrt parallell opplasting med enkel rate limiting
+- Fremdriftsindikator og feillogg
+- Nytt forsøk på bare feilede bilder
+- Valgfri automatisk serieopprettelse før opplasting
 
-NDLA sitt image-api dokumenterer at:
+## Oppsett
 
-- opplasting skjer mot `POST /image-api/v3/images`
-- opplastingen bruker `multipart/form-data`
-- skjemaet heter `MetaDataAndFileForm`
-- det krever OAuth-scope `images:write`
-- OAuth er satt opp med `authorizationUrl` hos `https://ndla.eu.auth0.com/authorize`
+1. Kopier `config.example.js` til `config.js` hvis du vil starte på nytt.
+2. Fyll inn `clientId` for `test` og `staging`.
+3. Bekreft `audience`-verdiene med NDLA/Auth0.
+4. Sett callback/logout URL i Auth0 til GitHub Pages-URLen din.
+5. Installer og bygg:
 
-Denne appen sender derfor:
+```bash
+npm install
+npm run build
+```
 
-- `metadata` som JSON
-- `file` som binærfil
+6. Publiser `dist/` til GitHub Pages.
 
-## Filer
+## Viktig om serieopprettelse
 
-- `index.html` – appen
-- `styles.css` – stil
-- `app.js` – auth + opplasting
-- `config.example.js` – kopieres til `config.js`
+Appen er satt opp med `createSeriesPath: '/image-api/v3/series'` i config. Selve opplastings-endpointet for bilder er bekreftet, men serie-endpointet bør verifiseres mot deres test/staging-miljø før første bruk. Hvis serieopprettelse feiler, får du tydelig feilmelding og kan justere config/oppsett før du prøver på nytt.
 
-## Før du kjører
-
-1. Kopier `config.example.js` til `config.js`
-2. Fyll inn riktig Auth0-/NDLA-konfigurasjon:
+## Forventet config-format
 
 ```js
-window.NDLA_CONFIG = {
-  auth0Domain: "ndla.eu.auth0.com",
-  auth0ClientId: "DIN_CLIENT_ID",
-  auth0Audience: "DIN_AUDIENCE",
-  apiBaseUrl: "https://api.ndla.no",
-  imageUploadPath: "/image-api/v3/images",
-  scope: "openid profile email images:write",
-  googleConnection: "google-oauth2"
+window.NDLA_UPLOADER_CONFIG = {
+  defaultEnvironment: 'test',
+  upload: {
+    maxConcurrent: 3,
+    delayMs: 300,
+    retryAttempts: 2,
+  },
+  envs: {
+    test: {
+      label: 'Test',
+      apiBase: 'https://api.test.ndla.no',
+      auth0Domain: 'ndla.eu.auth0.com',
+      clientId: 'SET_TEST_CLIENT_ID',
+      audience: 'https://api.test.ndla.no',
+      connection: 'google-oauth2',
+      scopes: 'openid profile email images:write'
+    },
+    staging: {
+      label: 'Staging',
+      apiBase: 'https://api.staging.ndla.no',
+      auth0Domain: 'ndla.eu.auth0.com',
+      clientId: 'SET_STAGING_CLIENT_ID',
+      audience: 'https://api.staging.ndla.no',
+      connection: 'google-oauth2',
+      scopes: 'openid profile email images:write'
+    }
+  },
+  endpoints: {
+    uploadPath: '/image-api/v3/images',
+    createSeriesPath: '/image-api/v3/series'
+  }
 };
 ```
 
-## Lokalt
+## Notater
 
-Kjør appen via en enkel lokal webserver:
-
-```bash
-python3 -m http.server 8080
-```
-
-Åpne så `http://localhost:8080`.
-
-## GitHub Pages
-
-1. Legg filene i et repo
-2. Legg til `config.js` i repoet ditt
-3. Aktiver GitHub Pages for branchen din
-4. Legg GitHub Pages-URL-en inn som tillatt callback URL i Auth0
-
-Eksempel på callback URL:
-
-- `https://brukernavn.github.io/repo-navn/`
-
-## Lisensvalg
-
-OpenAPI-skjemaet for image-api beskriver `copyright.license.license` som en streng, ikke som en publisert enum. I denne appen er nedtrekksmenyen derfor forhåndsutfylt med lisenskoder som faktisk forekommer i NDLA-bildedata, blant annet `CC-BY-4.0`, `CC-BY-SA-4.0`, `CC-BY-NC-4.0`, `CC-BY-NC-SA-4.0`, `CC-BY-NC-ND-4.0` og `COPYRIGHTED`. Standardvalg er `CC-BY-4.0`.
-
-Når du velger lisens, foreslår appen automatisk en passende lisensbeskrivelse, men feltet kan fortsatt overstyres manuelt.
-
-## Metadataformat
-
-Appen bygger metadata slik:
-
-```json
-{
-  "title": "hentet fra filnavn",
-  "alttext": "...",
-  "caption": "...",
-  "tags": ["tag1", "tag2"],
-  "language": "nb",
-  "modelReleased": "not-set",
-  "copyright": {
-    "license": {
-      "license": "CC-BY-4.0",
-      "description": "Creative Commons Attribution 4.0 International"
-    },
-    "origin": "...",
-    "creators": [{ "type": "photographer", "name": "Navn" }],
-    "processors": [],
-    "rightsholders": [],
-    "processed": false
-  }
-}
-```
-
-## Tittel fra filnavn
-
-`IMG_001-oversikt.png` blir til:
-
-`IMG 001 oversikt`
-
-Regler:
-
-- filendelse fjernes
-- `_` og `-` erstattes med mellomrom
-- flere mellomrom komprimeres
-
-## Viktig om designmanualen
-
-Denne versjonen er laget som en helt statisk app for GitHub Pages, og har derfor NDLA-inspirert utseende heller enn direkte import av hele `@ndla/ui`-biblioteket.
-
-Hvis du vil ha en React/Vite-versjon som bruker offisielle NDLA-komponenter direkte, kan denne løsningen brukes som fungerende prototype og deretter bygges om til `@ndla/ui`.
-
-
-## Miljøvelger: Test / Produksjon
-
-Appen har nå en nedtrekksmeny i toppen der brukeren kan velge **Test** eller **Produksjon**. Valget lagres i nettleseren. Hvert miljø kan ha egne verdier for:
-
-- `apiBaseUrl`
-- `auth0ClientId`
-- `auth0Audience`
-- `scope`
-- `googleConnection`
-
-Kopier `config.example.js` til `config.js` og fyll inn riktige verdier for begge miljøene.
+- Upload går mot `POST /image-api/v3/images` med `multipart/form-data` (`file` + `metadata`).
+- Metadataobjektet i preview-panelet viser hva som sendes per bilde.
+- `imageSeriesId` sendes bare hvis serieopprettelse er slått på og lykkes.
