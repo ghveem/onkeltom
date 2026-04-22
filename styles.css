@@ -157,3 +157,6 @@ input:focus, select:focus, textarea:focus {
   .hero, .main-grid { grid-template-columns: 1fr; display: grid; }
   .auth-box { min-width: auto; }
 }
+
+.environment-picker { display: grid; gap: 8px; font-weight: 600; }
+.environment-hint { margin: 12px 0 0; color: var(--muted); font-size: 0.95rem; }

@@ -21,8 +21,16 @@
           <p class="lede">
             Fyll inn felles metadata én gang, velg mange bildefiler, og la tittelen bli hentet automatisk fra filnavnet på hver fil.
           </p>
+          <p id="environmentHint" class="environment-hint">Valgt miljø: Test</p>
         </div>
         <div class="auth-box">
+          <label class="environment-picker">
+            <span>Miljø</span>
+            <select id="environmentSelect">
+              <option value="test" selected>Test</option>
+              <option value="prod">Produksjon</option>
+            </select>
+          </label>
           <div id="authStatus" class="status-pill neutral">Ikke logget inn</div>
           <button id="loginButton" class="button button-primary">Logg inn med Google</button>
           <button id="logoutButton" class="button button-secondary hidden">Logg ut</button>
@@ -77,15 +85,18 @@
               <div class="sub-grid">
                 <label>
                   <span>Lisens *</span>
-                  <input name="license" type="text" required placeholder="f.eks. CC-BY-4.0 eller COPYRIGHTED" />
+                  <select name="license" required>
+                    <option value="CC-BY-4.0" selected>CC-BY-4.0</option>
+                    <option value="CC-BY-SA-4.0">CC-BY-SA-4.0</option>
+                    <option value="CC-BY-NC-4.0">CC-BY-NC-4.0</option>
+                    <option value="CC-BY-NC-SA-4.0">CC-BY-NC-SA-4.0</option>
+                    <option value="CC-BY-NC-ND-4.0">CC-BY-NC-ND-4.0</option>
+                    <option value="COPYRIGHTED">COPYRIGHTED</option>
+                  </select>
                 </label>
                 <label>
                   <span>Lisensbeskrivelse</span>
-                  <input name="licenseDescription" type="text" placeholder="Valgfri beskrivelse" />
-                </label>
-                <label>
-                  <span>Lisens-URL</span>
-                  <input name="licenseUrl" type="url" placeholder="https://..." />
+                  <input name="licenseDescription" type="text" placeholder="Fylles ut automatisk, men kan overstyres" />
                 </label>
                 <label>
                   <span>Origin</span>
@@ -93,7 +104,7 @@
                 </label>
                 <label class="checkbox-row">
                   <input name="processed" type="checkbox" />
-                  <span>Prosessert</span>
+                  <span>Bearbeidet</span>
                 </label>
               </div>
             </div>

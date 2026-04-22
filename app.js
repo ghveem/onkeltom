@@ -1,7 +1,10 @@
-const cfg = window.NDLA_CONFIG || {};
+const baseCfg = window.NDLA_CONFIG || {};
+const ENV_STORAGE_KEY = "ndla-image-uploader-environment";
 const loginButton = document.getElementById("loginButton");
 const logoutButton = document.getElementById("logoutButton");
 const authStatus = document.getElementById("authStatus");
+const environmentSelect = document.getElementById("environmentSelect");
+const environmentHint = document.getElementById("environmentHint");
 const fileInput = document.getElementById("fileInput");
 const fileList = document.getElementById("fileList");
 const fileSummary = document.getElementById("fileSummary");
@@ -11,18 +14,82 @@ const previewBox = document.getElementById("previewBox");
 const results = document.getElementById("results");
 const metadataForm = document.getElementById("metadataForm");
 
+const LICENSE_PRESETS = {
+  "CC-BY-4.0": "Creative Commons Attribution 4.0 International",
+  "CC-BY-SA-4.0": "Creative Commons Attribution-ShareAlike 4.0 International",
+  "CC-BY-NC-4.0": "Creative Commons Attribution-NonCommercial 4.0 International",
+  "CC-BY-NC-SA-4.0": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International",
+  "CC-BY-NC-ND-4.0": "Creative Commons Attribution-NonCommercial-NoDerivs 4.0 International",
+  "COPYRIGHTED": "Copyrighted"
+};
+
 let auth0Client = null;
 let accessToken = null;
 let selectedFiles = [];
 
+function getStoredEnvironment() {
+  return localStorage.getItem(ENV_STORAGE_KEY) || baseCfg.defaultEnvironment || "test";
+}
+
+function getEnvironmentMap() {
+  if (baseCfg.environments && typeof baseCfg.environments === "object") {
+    return baseCfg.environments;
+  }
+  return {
+    default: {
+      auth0Domain: baseCfg.auth0Domain,
+      auth0ClientId: baseCfg.auth0ClientId,
+      auth0Audience: baseCfg.auth0Audience,
+      apiBaseUrl: baseCfg.apiBaseUrl,
+      imageUploadPath: baseCfg.imageUploadPath,
+      scope: baseCfg.scope,
+      googleConnection: baseCfg.googleConnection,
+      label: "Standard"
+    }
+  };
+}
+
+function getCurrentEnvironmentKey() {
+  const envs = getEnvironmentMap();
+  const selected = environmentSelect?.value || getStoredEnvironment();
+  return envs[selected] ? selected : Object.keys(envs)[0];
+}
+
+function getCurrentConfig() {
+  const envs = getEnvironmentMap();
+  return envs[getCurrentEnvironmentKey()] || envs[Object.keys(envs)[0]] || {};
+}
+
+function populateEnvironmentOptions() {
+  if (!environmentSelect) return;
+  const envs = getEnvironmentMap();
+  const entries = Object.entries(envs);
+  environmentSelect.innerHTML = entries
+    .map(([key, value]) => `<option value="${key}">${value.label || key}</option>`)
+    .join("");
+  const preferred = getStoredEnvironment();
+  environmentSelect.value = envs[preferred] ? preferred : entries[0]?.[0] || "default";
+  updateEnvironmentHint();
+}
+
+function updateEnvironmentHint() {
+  const cfg = getCurrentConfig();
+  if (!environmentHint) return;
+  const label = cfg.label || getCurrentEnvironmentKey();
+  const apiUrl = cfg.apiBaseUrl || "ukjent API";
+  environmentHint.textContent = `Valgt miljø: ${label} · ${apiUrl}`;
+}
+
 function ensureConfig() {
+  const cfg = getCurrentConfig();
   const required = ["auth0Domain", "auth0ClientId", "apiBaseUrl", "imageUploadPath", "scope", "googleConnection"];
-  const missing = required.filter((key) => !cfg[key] || cfg[key].includes("SETT_INN"));
+  const missing = required.filter((key) => !cfg[key] || String(cfg[key]).includes("SETT_INN"));
   if (missing.length) {
-    setAuthStatus(`Mangler config.js: ${missing.join(", ")}`, "error");
+    setAuthStatus(`Mangler config for ${cfg.label || getCurrentEnvironmentKey()}: ${missing.join(", ")}`, "error");
     loginButton.disabled = true;
     return false;
   }
+  loginButton.disabled = false;
   return true;
 }
 
@@ -41,7 +108,8 @@ function sanitizeTitleFromFilename(fileName) {
 
 function parseContributors(text) {
   return text
-    .split("\n")
+    .split("
+")
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line) => {
@@ -49,6 +117,18 @@ function parseContributors(text) {
       return { type: (type || "originator").trim(), name: nameParts.join("|").trim() };
     })
     .filter((entry) => entry.name);
+}
+
+function syncLicenseDescription() {
+  const licenseField = metadataForm.elements["license"];
+  const descriptionField = metadataForm.elements["licenseDescription"];
+  if (!licenseField || !descriptionField) return;
+
+  const suggested = LICENSE_PRESETS[licenseField.value] || "";
+  if (!descriptionField.value.trim() || descriptionField.dataset.autofilled === "true") {
+    descriptionField.value = suggested;
+    descriptionField.dataset.autofilled = "true";
+  }
 }
 
 function buildSharedMetadata(titleOverride) {
@@ -69,8 +149,7 @@ function buildSharedMetadata(titleOverride) {
     copyright: {
       license: {
         license: (data.get("license") || "").toString().trim(),
-        description: (data.get("licenseDescription") || "").toString().trim(),
-        url: (data.get("licenseUrl") || "").toString().trim()
+        description: (data.get("licenseDescription") || "").toString().trim()
       },
       origin: (data.get("origin") || "").toString().trim(),
       creators: parseContributors((data.get("creators") || "").toString()),
@@ -82,7 +161,6 @@ function buildSharedMetadata(titleOverride) {
 
   if (!metadata.alttext) delete metadata.alttext;
   if (!metadata.copyright.license.description) delete metadata.copyright.license.description;
-  if (!metadata.copyright.license.url) delete metadata.copyright.license.url;
   if (!metadata.copyright.origin) delete metadata.copyright.origin;
 
   return metadata;
@@ -133,6 +211,7 @@ function appendResult(title, body, kind = "neutral") {
 async function createAuthClient() {
   if (!ensureConfig()) return null;
   if (auth0Client) return auth0Client;
+  const cfg = getCurrentConfig();
   auth0Client = await window.auth0.createAuth0Client({
     domain: cfg.auth0Domain,
     clientId: cfg.auth0ClientId,
@@ -159,7 +238,7 @@ async function initAuth() {
 
   const isAuthenticated = await client.isAuthenticated();
   if (!isAuthenticated) {
-    setAuthStatus("Ikke logget inn", "neutral");
+    setAuthStatus(`Ikke logget inn (${getCurrentConfig().label || getCurrentEnvironmentKey()})`, "neutral");
     logoutButton.classList.add("hidden");
     uploadButton.disabled = true;
     return;
@@ -167,7 +246,7 @@ async function initAuth() {
 
   const user = await client.getUser();
   accessToken = await client.getTokenSilently();
-  setAuthStatus(`Logget inn som ${user?.name || user?.email || "bruker"}`, "success");
+  setAuthStatus(`Logget inn i ${getCurrentConfig().label || getCurrentEnvironmentKey()} som ${user?.name || user?.email || "bruker"}`, "success");
   logoutButton.classList.remove("hidden");
   uploadButton.disabled = !selectedFiles.length;
 }
@@ -175,6 +254,7 @@ async function initAuth() {
 async function login() {
   const client = await createAuthClient();
   if (!client) return;
+  const cfg = getCurrentConfig();
   await client.loginWithRedirect({
     authorizationParams: {
       connection: cfg.googleConnection,
@@ -193,6 +273,7 @@ async function logout() {
 }
 
 async function uploadOne(file, metadata) {
+  const cfg = getCurrentConfig();
   const form = new FormData();
   form.append("metadata", new Blob([JSON.stringify(metadata)], { type: "application/json" }));
   form.append("file", file, file.name);
@@ -243,8 +324,21 @@ async function uploadAll() {
   uploadButton.disabled = false;
 }
 
+async function switchEnvironment(nextEnv) {
+  localStorage.setItem(ENV_STORAGE_KEY, nextEnv);
+  auth0Client = null;
+  accessToken = null;
+  logoutButton.classList.add("hidden");
+  updateEnvironmentHint();
+  renderFiles();
+  await initAuth();
+}
+
 loginButton.addEventListener("click", login);
 logoutButton.addEventListener("click", logout);
+environmentSelect?.addEventListener("change", async (event) => {
+  await switchEnvironment(event.target.value);
+});
 fileInput.addEventListener("change", (event) => {
   selectedFiles = Array.from(event.target.files || []);
   renderFiles();
@@ -255,7 +349,19 @@ dryRunButton.addEventListener("click", () => {
   renderPreview();
 });
 uploadButton.addEventListener("click", uploadAll);
+metadataForm.elements["licenseDescription"]?.addEventListener("input", () => {
+  metadataForm.elements["licenseDescription"].dataset.autofilled = "false";
+  renderPreview();
+});
+metadataForm.elements["license"]?.addEventListener("change", () => {
+  syncLicenseDescription();
+  renderPreview();
+});
 metadataForm.addEventListener("input", renderPreview);
+
+populateEnvironmentOptions();
+syncLicenseDescription();
+renderPreview();
 
 initAuth().catch((error) => {
   console.error(error);

@@ -6,6 +6,8 @@ Liten statisk webapp for GitHub Pages som lar deg:
 - velge mange bilder samtidig
 - fylle inn felles metadata én gang
 - generere `title` fra filnavnet på hvert bilde
+- velge lisens fra nedtrekksmeny med NDLA-tilpassede lisenskoder
+- få automatisk forslag til lisensbeskrivelse (standard: `CC-BY-4.0`)
 - laste opp ett og ett bilde til NDLA sitt image-api
 
 ## Hva appen bygger på
@@ -68,6 +70,12 @@ Eksempel på callback URL:
 
 - `https://brukernavn.github.io/repo-navn/`
 
+## Lisensvalg
+
+OpenAPI-skjemaet for image-api beskriver `copyright.license.license` som en streng, ikke som en publisert enum. I denne appen er nedtrekksmenyen derfor forhåndsutfylt med lisenskoder som faktisk forekommer i NDLA-bildedata, blant annet `CC-BY-4.0`, `CC-BY-SA-4.0`, `CC-BY-NC-4.0`, `CC-BY-NC-SA-4.0`, `CC-BY-NC-ND-4.0` og `COPYRIGHTED`. Standardvalg er `CC-BY-4.0`.
+
+Når du velger lisens, foreslår appen automatisk en passende lisensbeskrivelse, men feltet kan fortsatt overstyres manuelt.
+
 ## Metadataformat
 
 Appen bygger metadata slik:
@@ -83,8 +91,7 @@ Appen bygger metadata slik:
   "copyright": {
     "license": {
       "license": "CC-BY-4.0",
-      "description": "...",
-      "url": "https://..."
+      "description": "Creative Commons Attribution 4.0 International"
     },
     "origin": "...",
     "creators": [{ "type": "photographer", "name": "Navn" }],
@@ -112,3 +119,16 @@ Regler:
 Denne versjonen er laget som en helt statisk app for GitHub Pages, og har derfor NDLA-inspirert utseende heller enn direkte import av hele `@ndla/ui`-biblioteket.
 
 Hvis du vil ha en React/Vite-versjon som bruker offisielle NDLA-komponenter direkte, kan denne løsningen brukes som fungerende prototype og deretter bygges om til `@ndla/ui`.
+
+
+## Miljøvelger: Test / Produksjon
+
+Appen har nå en nedtrekksmeny i toppen der brukeren kan velge **Test** eller **Produksjon**. Valget lagres i nettleseren. Hvert miljø kan ha egne verdier for:
+
+- `apiBaseUrl`
+- `auth0ClientId`
+- `auth0Audience`
+- `scope`
+- `googleConnection`
+
+Kopier `config.example.js` til `config.js` og fyll inn riktige verdier for begge miljøene.
